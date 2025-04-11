@@ -9,6 +9,11 @@ def calcular_idade():
         idade = hoje.year - data_nascimento.year - (
                     (hoje.month, hoje.day) < (data_nascimento.month, data_nascimento.day))
         print(f"Você tem {idade} anos.")
+
+        if idade >= 18:
+            print("Você é maior de idade.")
+        else:
+            print("Você é menor de idade.")
     except ValueError:
         print("Formato de data inválido. Use dd/mm/aaaa.")
 
