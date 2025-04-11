@@ -8,6 +8,10 @@ def calcular_idade():
         hoje = datetime.today()
         idade = hoje.year - data_nascimento.year - (
                     (hoje.month, hoje.day) < (data_nascimento.month, data_nascimento.day))
+        if data_nascimento > hoje:
+            print("Data de nascimento no futuro! Verifique e tente novamente.")
+            return
+
         print(f"Você tem {idade} anos.")
 
         if idade >= 18:
