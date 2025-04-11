@@ -12,6 +12,14 @@ def calcular_idade():
             print("Data de nascimento no futuro! Verifique e tente novamente.")
             return
 
+        proximo_aniversario = data_nascimento.replace(year=hoje.year)
+        if proximo_aniversario < hoje:
+            proximo_aniversario = proximo_aniversario.replace(year=hoje.year + 1)
+
+        dias_faltando = (proximo_aniversario - hoje).days
+        print(
+            f"Seu próximo aniversário será em {proximo_aniversario.strftime('%d/%m/%Y')}, faltam {dias_faltando} dias.")
+
         print(f"Você tem {idade} anos.")
 
         if idade >= 18:
