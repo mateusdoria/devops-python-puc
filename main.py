@@ -20,6 +20,11 @@ def calcular_idade():
         print(
             f"Seu próximo aniversário será em {proximo_aniversario.strftime('%d/%m/%Y')}, faltam {dias_faltando} dias.")
 
+        dias_semana = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado",
+                       "domingo"]
+        dia_nasc = dias_semana[data_nascimento.weekday()]
+        print(f"Você nasceu em uma {dia_nasc}.")
+
         print(f"Você tem {idade} anos.")
 
         if idade >= 18:
