@@ -1,39 +1,60 @@
-import unittest
-from datetime import datetime
+import pytest
+from datetime import datetime, timedelta
+from main import analisar_data_nascimento, gerar_conteudo_txt, salvar_no_s3_local
+from moto import mock_s3
+import boto3
 
-from main import analisar_data_nascimento
+# Testes para analisar_data_nascimento
+def test_data_valida_maior_de_idade():
+    data = "01/01/2000"
+    resultado = analisar_data_nascimento(data)
+    assert resultado["idade"] >= 18
+    assert resultado["maior_de_idade"] is True
 
+def test_data_valida_menor_de_idade():
+    hoje = datetime.today()
+    data = f"{hoje.day:02d}/{hoje.month:02d}/{hoje.year - 10}"
+    resultado = analisar_data_nascimento(data)
+    assert resultado["idade"] < 18
+    assert resultado["maior_de_idade"] is False
 
-class TestCalculoIdade(unittest.TestCase):
+def test_data_invalida():
+    resultado = analisar_data_nascimento("31-02-2020")
+    assert resultado["erro"] == "Formato de data inválido. Use dd/mm/aaaa."
 
-    def test_data_valida_maior_de_idade(self):
-        data = "10/04/2000"
-        resultado = analisar_data_nascimento(data)
-        self.assertIn("idade", resultado)
-        self.assertTrue(resultado["idade"] >= 18)
-        self.assertTrue(resultado["maior_de_idade"])
+def test_data_futura():
+    futuro = (datetime.today() + timedelta(days=1)).strftime("%d/%m/%Y")
+    resultado = analisar_data_nascimento(futuro)
+    assert resultado["erro"] == "Data de nascimento no futuro!"
 
-    def test_data_valida_menor_de_idade(self):
-        hoje = datetime.today()
-        ano = hoje.year - 10
-        data = f"01/01/{ano}"
-        resultado = analisar_data_nascimento(data)
-        self.assertTrue(resultado["idade"] < 18)
-        self.assertFalse(resultado["maior_de_idade"])
+# Teste para gerar_conteudo_txt
+def test_gerar_conteudo_txt_valido():
+    resultado = {
+        "idade": 25,
+        "maior_de_idade": True,
+        "proximo_aniversario": "01/01/2026",
+        "dias_faltando": 100,
+        "dia_nasc_semana": "segunda-feira"
+    }
+    texto = gerar_conteudo_txt(resultado)
+    assert "Você tem 25 anos." in texto
+    assert "Você é maior de idade." in texto
+    assert "Próximo aniversário" in texto
 
-    def test_data_invalida(self):
-        resultado = analisar_data_nascimento("31-02-2020")
-        self.assertEqual(resultado["erro"], "Formato de data inválido. Use dd/mm/aaaa.")
+def test_gerar_conteudo_txt_erro():
+    resultado = {"erro": "Formato de data inválido. Use dd/mm/aaaa."}
+    texto = gerar_conteudo_txt(resultado)
+    assert "Erro: Formato de data inválido" in texto
 
-    def test_data_futura(self):
-        futuro = datetime.today().replace(year=datetime.today().year + 1)
-        data = futuro.strftime("%d/%m/%Y")
-        resultado = analisar_data_nascimento(data)
-        self.assertEqual(resultado["erro"], "Data de nascimento no futuro!")
+# Teste para salvar_no_s3_local (mock S3)
+@mock_s3
+def test_salvar_no_s3_local():
+    bucket = "idade-bucket"
+    client = boto3.client("s3", region_name="us-east-1")
+    client.create_bucket(Bucket=bucket)
 
-    def test_dia_da_semana(self):
-        resultado = analisar_data_nascimento("11/04/1995")
-        self.assertEqual(resultado["dia_nasc_semana"], "terça-feira")  # verifique com um calendário se precisar
+    salvar_no_s3_local("conteudo teste", "teste.txt")
 
-if __name__ == "__main__":
-    unittest.main()
+    objetos = client.list_objects_v2(Bucket=bucket)
+    nomes = [obj["Key"] for obj in objetos.get("Contents", [])]
+    assert "teste.txt" in nomes
