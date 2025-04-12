@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  devops-puc:
+    image: localstack/localstack:latest
+    container_name: devops-puc
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack-data  # usamos outro diretório interno
+    volumes:
+      - localstack-data:/tmp/localstack-data  # volume montado fora do diretório conflitante
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  localstack-data:
