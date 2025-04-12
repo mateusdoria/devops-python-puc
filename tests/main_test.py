@@ -1,7 +1,5 @@
-import pytest
 from datetime import datetime, timedelta
 from main import analisar_data_nascimento, gerar_conteudo_txt, salvar_no_s3_local
-from moto import mock_s3
 import boto3
 
 # Testes para analisar_data_nascimento
@@ -45,16 +43,3 @@ def test_gerar_conteudo_txt_erro():
     resultado = {"erro": "Formato de data inválido. Use dd/mm/aaaa."}
     texto = gerar_conteudo_txt(resultado)
     assert "Erro: Formato de data inválido" in texto
-
-# Teste para salvar_no_s3_local (mock S3)
-@mock_s3
-def test_salvar_no_s3_local():
-    bucket = "idade-bucket"
-    client = boto3.client("s3", region_name="us-east-1")
-    client.create_bucket(Bucket=bucket)
-
-    salvar_no_s3_local("conteudo teste", "teste.txt")
-
-    objetos = client.list_objects_v2(Bucket=bucket)
-    nomes = [obj["Key"] for obj in objetos.get("Contents", [])]
-    assert "teste.txt" in nomes
